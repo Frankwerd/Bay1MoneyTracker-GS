@@ -58,14 +58,71 @@ function getSpreadsheet() {
 function setupSheets() {
   const ss = getSpreadsheet();
 
+  // Initialize data sheets
   [CONFIG.SHEETS.EXPENSES, CONFIG.SHEETS.REVENUE].forEach(sheetName => {
     let sheet = ss.getSheetByName(sheetName);
     if (!sheet) {
       sheet = ss.insertSheet(sheetName);
-      sheet.appendRow(CONFIG.HEADERS);
-      sheet.getRange(1, 1, 1, CONFIG.HEADERS.length).setFontWeight('bold');
     }
+
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(CONFIG.HEADERS);
+    }
+
+    applyFormatting(sheet);
   });
+
+  // Initialize profit sheet
+  let profitSheet = ss.getSheetByName(CONFIG.SHEETS.PROFIT);
+  if (!profitSheet) {
+    profitSheet = ss.insertSheet(CONFIG.SHEETS.PROFIT);
+  }
+  setupProfitSheet(ss);
+}
+
+/**
+ * Applies basic formatting to a sheet.
+ */
+function applyFormatting(sheet) {
+  const headers = CONFIG.HEADERS;
+
+  // Freeze header row and make bold
+  sheet.setFrozenRows(1);
+  sheet.getRange(1, 1, 1, headers.length).setFontWeight('bold');
+
+  // Apply currency formatting to the 'Amount' column
+  const amountColIndex = headers.indexOf('Amount') + 1;
+  if (amountColIndex > 0) {
+    sheet.getRange(2, amountColIndex, sheet.getMaxRows() - 1, 1).setNumberFormat('$#,##0.00');
+  }
+
+  // Apply alternating row colors (banding)
+  const range = sheet.getRange(1, 1, sheet.getMaxRows(), headers.length);
+  range.getBandings().forEach(banding => banding.remove());
+  range.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY, true, false);
+}
+
+/**
+ * Sets up the summary on the Profit sheet.
+ */
+function setupProfitSheet(ss) {
+  const sheet = ss.getSheetByName(CONFIG.SHEETS.PROFIT);
+  if (!sheet) return;
+
+  const expensesSheet = CONFIG.SHEETS.EXPENSES;
+  const revenueSheet = CONFIG.SHEETS.REVENUE;
+  const amountCol = 'E'; // Based on HEADERS: Date, Description, Category, Account, Amount, Link
+
+  const summaryData = [
+    ['Summary', ''],
+    ['Total Revenue', `=SUM('${revenueSheet}'!${amountCol}:${amountCol})`],
+    ['Total Expenses', `=SUM('${expensesSheet}'!${amountCol}:${amountCol})`],
+    ['Net Profit', '=B2-B3']
+  ];
+
+  sheet.getRange(1, 1, summaryData.length, 2).setValues(summaryData);
+  sheet.getRange(1, 1, 1, 2).setFontWeight('bold');
+  sheet.getRange(2, 2, 3, 1).setNumberFormat('$#,##0.00');
 }
 
 /**
@@ -150,6 +207,8 @@ function processEmails() {
         sheet.appendRow([
           data.date,
           data.description,
+          data.Proposed_Category,
+          data.Proposed_Account,
           data.amount,
           thread.getPermalink()
         ]);

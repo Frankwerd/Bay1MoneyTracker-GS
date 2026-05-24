@@ -14,10 +14,11 @@ const CONFIG = {
   },
   SHEETS: {
     EXPENSES: 'Expenses',
-    REVENUE: 'Revenue'
+    REVENUE: 'Revenue',
+    PROFIT: 'Profit'
   },
   PROPERTY_KEYS: {
     SPREADSHEET_ID: 'SPREADSHEET_ID'
   },
-  HEADERS: ['Date', 'Description', 'Amount', 'Thread Link']
+  HEADERS: ['Date', 'Description', 'Proposed_Category', 'Proposed_Account', 'Amount', 'Thread Link']
 };

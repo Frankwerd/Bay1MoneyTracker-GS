@@ -38,6 +38,8 @@ function parseEmailContent(message) {
   return {
     date: date,
     amount: amount,
-    description: description
+    description: description,
+    Proposed_Category: 'Uncategorized',
+    Proposed_Account: 'General'
   };
 }
