@@ -16,5 +16,8 @@ const CONFIG = {
     EXPENSES: 'Expenses',
     REVENUE: 'Revenue'
   },
+  PROPERTY_KEYS: {
+    SPREADSHEET_ID: 'SPREADSHEET_ID'
+  },
   HEADERS: ['Date', 'Description', 'Amount', 'Thread Link']
 };

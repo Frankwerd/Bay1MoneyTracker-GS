@@ -20,13 +20,23 @@ function runSetup() {
 }
 
 /**
- * Ensures required sheets exist with headers.
+ * Gets the spreadsheet by ID from properties or falls back to active/search.
  */
-function setupSheets() {
+function getSpreadsheet() {
+  const props = PropertiesService.getScriptProperties();
+  const savedId = props.getProperty(CONFIG.PROPERTY_KEYS.SPREADSHEET_ID);
+
+  if (savedId) {
+    try {
+      return SpreadsheetApp.openById(savedId);
+    } catch (e) {
+      console.warn('Saved Spreadsheet ID is invalid or inaccessible. Searching...');
+    }
+  }
+
   let ss = SpreadsheetApp.getActiveSpreadsheet();
   
   if (!ss) {
-    // Fallback for when script is run standalone and not bound to a sheet
     const files = DriveApp.getFilesByName('Financial Tracker');
     if (files.hasNext()) {
       ss = SpreadsheetApp.open(files.next());
@@ -34,6 +44,19 @@ function setupSheets() {
       ss = SpreadsheetApp.create('Financial Tracker');
     }
   }
+
+  if (ss) {
+    props.setProperty(CONFIG.PROPERTY_KEYS.SPREADSHEET_ID, ss.getId());
+  }
+
+  return ss;
+}
+
+/**
+ * Ensures required sheets exist with headers.
+ */
+function setupSheets() {
+  const ss = getSpreadsheet();
 
   [CONFIG.SHEETS.EXPENSES, CONFIG.SHEETS.REVENUE].forEach(sheetName => {
     let sheet = ss.getSheetByName(sheetName);
@@ -92,16 +115,11 @@ function setupTriggers() {
  */
 function processEmails() {
   const categories = [CONFIG.CATEGORIES.EXPENSES, CONFIG.CATEGORIES.REVENUE];
-  let ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ss = getSpreadsheet();
   
   if (!ss) {
-    const files = DriveApp.getFilesByName('Financial Tracker');
-    if (files.hasNext()) {
-      ss = SpreadsheetApp.open(files.next());
-    } else {
-      console.error('Active spreadsheet not found. Please run setup or ensure script is bound to a sheet.');
-      return;
-    }
+    console.error('Spreadsheet not found. Please run setup.');
+    return;
   }
 
   categories.forEach(cat => {
@@ -146,4 +164,3 @@ function processEmails() {
     });
   });
 }
-
